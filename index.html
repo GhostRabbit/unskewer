@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Unskewer</title>
+    <script src="p5.js"></script>
+    <script src="sketch.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 350px 440px 440px;
+            gap: 20px;
+        }
+        .cell {
+            background-color: white;
+            border: 1px solid #999;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 350px;
+        }
+        .cell-title {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .controls-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #eee;
+            overflow: auto;
+            max-width: 100%;
+        }
+        canvas {
+            display: block !important;
+            border: 1px solid #ccc;
+            max-width: 100%;
+            max-height: 400px;
+            width: auto !important;
+            height: auto !important;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-container">
+        <!-- Top Left: Controls -->
+        <div class="cell">
+            <div class="cell-title">Controls</div>
+            <div class="controls-inner">
+                <div class="control-group">
+                    <label for="imageInput">Load Image:</label>
+                    <input type="file" id="imageInput" accept="image/*">
+                </div>
+                
+                <div class="control-group">
+                    <label for="presetSizes">Preset Size:</label>
+                    <select id="presetSizes">
+                        <option value="custom">Custom</option>
+                        <option value="630x880">Card (630x880)</option>
+                        <option value="400x300" selected>Standard (400x300)</option>
+                        <option value="800x600">Large (800x600)</option>
+                    </select>
+                </div>
+                
+                <div class="control-group" style="flex-direction: row; align-items: center;">
+                    <input type="checkbox" id="lockRatio">
+                    <label for="lockRatio" style="margin: 0;">Lock Aspect Ratio</label>
+                </div>
+
+                <div class="control-group">
+                    <label for="width">Output Width:</label>
+                    <input type="number" id="width" value="400" min="10" max="4000">
+                </div>
+                
+                <div class="control-group">
+                    <label for="height">Output Height:</label>
+                    <input type="number" id="height" value="300" min="10" max="4000">
+                </div>
+                
+                <div class="control-group">
+                    <label for="quality">Render Quality:</label>
+                    <select id="quality">
+                        <option value="4">Low (Fast preview)</option>
+                        <option value="2">Medium</option>
+                        <option value="1" selected>High (Bilinear)</option>
+                        <option value="0.5">Ultra (Supersampled Anti-Aliasing)</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 10px; flex-direction: column;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <button id="recalc">Recalculate Output</button>
+                        <span id="recalcTime" style="font-size: 12px; color: #666; font-family: monospace;">0 ms</span>
+                    </div>
+                    <button id="downloadImage" style="background-color: #28a745; color: white; font-weight: bold; padding: 12px; border: none; border-radius: 4px; cursor: pointer;">💾 Export High-Res Image</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Right: Input Canvas -->
+        <div class="cell">
+            <div class="cell-title">Input Image with Corners</div>
+            <div id="canvas-input" class="canvas-container"></div>
+        </div>
+
+        <!-- Bottom Left: Output Canvas -->
+        <div class="cell">
+            <div class="cell-title">Corrected Output</div>
+            <div id="canvas-output" class="canvas-container"></div>
+        </div>
+    </div>
+</body>
+</html>
