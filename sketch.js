@@ -179,17 +179,81 @@ function draw() {
         endShape(CLOSE);
         
         // draw points
-        fill(255, 0, 0);
-        noStroke();
+        let relX = (mouseX - panX) / zoom;
+        let relY = (mouseY - panY) / zoom;
+        let onCanvas = mouseX >= 0 && mouseX <= 400 && mouseY >= 0 && mouseY <= 300;
+        let closestIdx = -1;
+        
+        if (keyIsDown(SHIFT) && onCanvas) {
+            let closestDist = Infinity;
+            for (let i = 0; i < points.length; i++) {
+                let d = dist(relX, relY, points[i].x, points[i].y);
+                if (d < closestDist) {
+                    closestDist = d;
+                    closestIdx = i;
+                }
+            }
+        }
+
         for (let i = 0; i < points.length; i++) {
             let p = points[i];
-            ellipse(p.x, p.y, 10, 10);
+            
+            if (closestIdx === i) {
+                let viewSize = 75; // 15 * 5
+                
+                push();
+                drawingContext.save();
+                drawingContext.beginPath();
+                drawingContext.arc(p.x, p.y, viewSize / 2, 0, Math.PI * 2);
+                drawingContext.clip();
+                
+                fill(240);
+                noStroke();
+                rectMode(CENTER);
+                rect(p.x, p.y, viewSize, viewSize);
+                rectMode(CORNER);
+
+                translate(p.x, p.y);
+                scale(5);
+                translate(-p.x, -p.y);
+                
+                drawingContext.imageSmoothingEnabled = false;
+                image(img, 0, 0, 400, 300);
+                
+                drawingContext.restore();
+                pop();
+                
+                noFill();
+                stroke(255, 0, 0);
+                strokeWeight(2 / zoom);
+                ellipse(p.x, p.y, viewSize, viewSize);
+                
+                stroke(0, 255, 0);
+                strokeWeight(1 / zoom);
+                line(p.x - 5, p.y, p.x + 5, p.y);
+                line(p.x, p.y - 5, p.x, p.y + 5);
+            } else {
+                let isHovered = false;
+                if (onCanvas && dist(relX, relY, p.x, p.y) < 22.5) {
+                    isHovered = true;
+                }
+
+                if (isHovered) {
+                    noFill();
+                    stroke(255, 0, 0);
+                    strokeWeight(2 / zoom);
+                } else {
+                    fill(255, 0, 0);
+                    noStroke();
+                }
+                ellipse(p.x, p.y, 15, 15);
+            }
             
             // Draw labels with coordinates
             fill(255);
+            noStroke();
             textSize(12);
-            text(`(${Math.round(p.x)},${Math.round(p.y)})`, p.x + 15, p.y);
-            fill(255, 0, 0);
+            text(`(${Math.round(p.x)},${Math.round(p.y)})`, p.x + (closestIdx === i ? 45 : 15), p.y);
         }
         
         // Draw image dimensions text
@@ -411,7 +475,7 @@ function mousePressed() {
         let relY = (mouseY - panY) / zoom;
         if (relX >= 0 && relX <= 400 && relY >= 0 && relY <= 300) {
             for (let i = 0; i < points.length; i++) {
-                if (dist(relX, relY, points[i].x, points[i].y) < 15) {
+                if (dist(relX, relY, points[i].x, points[i].y) < 22.5) {
                     dragging = i;
                     break;
                 }
@@ -447,4 +511,44 @@ function mouseDragged() {
 
 function mouseReleased() {
     dragging = -1;
+}
+
+function keyPressed() {
+    let onCanvas = mouseX >= 0 && mouseX <= 400 && mouseY >= 0 && mouseY <= 300;
+    if (keyIsDown(SHIFT) && onCanvas) {
+        let relX = (mouseX - panX) / zoom;
+        let relY = (mouseY - panY) / zoom;
+        
+        let closestIdx = -1;
+        let closestDist = Infinity;
+        for (let i = 0; i < points.length; i++) {
+            let d = dist(relX, relY, points[i].x, points[i].y);
+            if (d < closestDist) {
+                closestDist = d;
+                closestIdx = i;
+            }
+        }
+        
+        if (closestIdx !== -1) {
+            let moved = false;
+            if (keyCode === LEFT_ARROW) {
+                points[closestIdx].x -= 1;
+                moved = true;
+            } else if (keyCode === RIGHT_ARROW) {
+                points[closestIdx].x += 1;
+                moved = true;
+            } else if (keyCode === UP_ARROW) {
+                points[closestIdx].y -= 1;
+                moved = true;
+            } else if (keyCode === DOWN_ARROW) {
+                points[closestIdx].y += 1;
+                moved = true;
+            }
+            
+            if (moved) {
+                pointsChanged = true;
+                return false; // prevent default scrolling
+            }
+        }
+    }
 }
